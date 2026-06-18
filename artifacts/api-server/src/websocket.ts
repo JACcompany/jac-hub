@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage, Server } from "http";
 import { db, mensajesChatTable, usuariosTable, notificacionesTable } from "@workspace/db";
+import { sendPushToUser } from "./routes/push";
 import { eq, ne } from "drizzle-orm";
 import { logger } from "./lib/logger";
 
@@ -143,7 +144,7 @@ export function setupWebSocket(server: Server) {
           fechaEnvio: saved.fechaEnvio.toISOString(),
         }, null);
 
-        // Owner posts in info channel → global notification for all users
+        // Owner posts in info channel → DB notification + Web Push for all users
         if (isOwner && INFO_SALAS.includes(sala)) {
           const preview = contenido.length > 80 ? contenido.slice(0, 80) + "…" : contenido;
           const todos = await db
@@ -153,15 +154,23 @@ export function setupWebSocket(server: Server) {
 
           await Promise.all(
             todos.map(u =>
-              db.insert(notificacionesTable).values({
-                mensaje: `📢 Nuevo anuncio en #${sala}: "${preview}"`,
-                tipo: "info",
-                enlace: "/chat",
-                usuario: u.email,
-              })
+              Promise.all([
+                db.insert(notificacionesTable).values({
+                  mensaje: `📢 Nuevo anuncio en #${sala}: "${preview}"`,
+                  tipo: "info",
+                  enlace: "/chat",
+                  usuario: u.email,
+                }),
+                sendPushToUser(
+                  u.email,
+                  `📢 JAC Hub — #${sala}`,
+                  preview,
+                  "/chat"
+                ),
+              ])
             )
           );
-          logger.info({ sala, usuarios: todos.length }, "Notificaciones de anuncio enviadas");
+          logger.info({ sala, usuarios: todos.length }, "Notificaciones + push de anuncio enviados");
         }
       } catch (err) {
         logger.warn({ err }, "WS message error");
