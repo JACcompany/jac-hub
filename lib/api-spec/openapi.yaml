@@ -1,0 +1,966 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: JAC Hub API - Panel de gestión para estudio indie de videojuegos
+servers:
+  - url: /api
+    description: Ruta base de la API
+tags:
+  - name: health
+    description: Estado del servidor
+  - name: auth
+    description: Autenticación
+  - name: proyectos
+    description: Proyectos del estudio
+  - name: tareas
+    description: Gestión de tareas
+  - name: bugs
+    description: Seguimiento de bugs
+  - name: equipo
+    description: Miembros del equipo
+  - name: builds
+    description: Builds del juego
+  - name: notificaciones
+    description: Sistema de notificaciones
+  - name: dashboard
+    description: Estadísticas del dashboard
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Saludable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Credenciales inválidas
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Cerrar sesión
+      responses:
+        "200":
+          description: Sesión cerrada
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Obtener usuario actual
+      responses:
+        "200":
+          description: Usuario actual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsuarioActual"
+        "401":
+          description: No autenticado
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Estadísticas generales del dashboard
+      responses:
+        "200":
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/actividad:
+    get:
+      operationId: getDashboardActividad
+      tags: [dashboard]
+      summary: Feed de actividad reciente
+      responses:
+        "200":
+          description: Actividad reciente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActividadItem"
+
+  /proyectos:
+    get:
+      operationId: listProyectos
+      tags: [proyectos]
+      summary: Listar proyectos
+      responses:
+        "200":
+          description: Lista de proyectos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proyecto"
+    post:
+      operationId: createProyecto
+      tags: [proyectos]
+      summary: Crear proyecto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProyectoInput"
+      responses:
+        "201":
+          description: Proyecto creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+
+  /proyectos/{id}:
+    get:
+      operationId: getProyecto
+      tags: [proyectos]
+      summary: Obtener proyecto por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Proyecto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+        "404":
+          description: Proyecto no encontrado
+    patch:
+      operationId: updateProyecto
+      tags: [proyectos]
+      summary: Actualizar proyecto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProyectoUpdate"
+      responses:
+        "200":
+          description: Proyecto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+    delete:
+      operationId: deleteProyecto
+      tags: [proyectos]
+      summary: Eliminar proyecto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Proyecto eliminado
+
+  /tareas:
+    get:
+      operationId: listTareas
+      tags: [tareas]
+      summary: Listar tareas
+      parameters:
+        - name: proyectoId
+          in: query
+          schema:
+            type: integer
+        - name: columna
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de tareas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tarea"
+    post:
+      operationId: createTarea
+      tags: [tareas]
+      summary: Crear tarea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TareaInput"
+      responses:
+        "201":
+          description: Tarea creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tarea"
+
+  /tareas/{id}:
+    patch:
+      operationId: updateTarea
+      tags: [tareas]
+      summary: Actualizar tarea
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TareaUpdate"
+      responses:
+        "200":
+          description: Tarea actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tarea"
+    delete:
+      operationId: deleteTarea
+      tags: [tareas]
+      summary: Eliminar tarea
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Tarea eliminada
+
+  /bugs:
+    get:
+      operationId: listBugs
+      tags: [bugs]
+      summary: Listar bugs
+      parameters:
+        - name: proyectoId
+          in: query
+          schema:
+            type: integer
+        - name: prioridad
+          in: query
+          schema:
+            type: string
+        - name: estado
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de bugs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bug"
+    post:
+      operationId: createBug
+      tags: [bugs]
+      summary: Reportar bug
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BugInput"
+      responses:
+        "201":
+          description: Bug reportado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bug"
+
+  /bugs/{id}:
+    patch:
+      operationId: updateBug
+      tags: [bugs]
+      summary: Actualizar bug
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BugUpdate"
+      responses:
+        "200":
+          description: Bug actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bug"
+    delete:
+      operationId: deleteBug
+      tags: [bugs]
+      summary: Eliminar bug
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Bug eliminado
+
+  /equipo:
+    get:
+      operationId: listEquipo
+      tags: [equipo]
+      summary: Listar miembros del equipo
+      responses:
+        "200":
+          description: Lista de miembros
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Miembro"
+    post:
+      operationId: createMiembro
+      tags: [equipo]
+      summary: Agregar miembro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MiembroInput"
+      responses:
+        "201":
+          description: Miembro agregado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Miembro"
+
+  /equipo/{id}:
+    patch:
+      operationId: updateMiembro
+      tags: [equipo]
+      summary: Actualizar miembro
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MiembroUpdate"
+      responses:
+        "200":
+          description: Miembro actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Miembro"
+
+  /builds:
+    get:
+      operationId: listBuilds
+      tags: [builds]
+      summary: Listar builds
+      parameters:
+        - name: proyectoId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de builds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Build"
+    post:
+      operationId: createBuild
+      tags: [builds]
+      summary: Subir build
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildInput"
+      responses:
+        "201":
+          description: Build subida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+
+  /builds/{id}:
+    patch:
+      operationId: updateBuild
+      tags: [builds]
+      summary: Actualizar build
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildUpdate"
+      responses:
+        "200":
+          description: Build actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+
+  /notificaciones:
+    get:
+      operationId: listNotificaciones
+      tags: [notificaciones]
+      summary: Listar notificaciones
+      responses:
+        "200":
+          description: Lista de notificaciones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notificacion"
+
+  /notificaciones/{id}/leer:
+    patch:
+      operationId: marcarNotificacionLeida
+      tags: [notificaciones]
+      summary: Marcar notificación como leída
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notificación marcada como leída
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notificacion"
+
+  /notificaciones/leer-todas:
+    patch:
+      operationId: marcarTodasLeidas
+      tags: [notificaciones]
+      summary: Marcar todas como leídas
+      responses:
+        "200":
+          description: Todas marcadas como leídas
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        recordarSesion:
+          type: boolean
+
+    AuthResponse:
+      type: object
+      required: [usuario, token]
+      properties:
+        usuario:
+          $ref: "#/components/schemas/UsuarioActual"
+        token:
+          type: string
+
+    UsuarioActual:
+      type: object
+      required: [id, nombre, email, rol, avatar]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        enLinea:
+          type: boolean
+
+    DashboardStats:
+      type: object
+      required: [proyectosActivos, miembrosConectados, bugsAbiertos, tareasCompletadasSemana, totalTareas, totalBuilds]
+      properties:
+        proyectosActivos:
+          type: integer
+        miembrosConectados:
+          type: integer
+        bugsAbiertos:
+          type: integer
+        tareasCompletadasSemana:
+          type: integer
+        totalTareas:
+          type: integer
+        totalBuilds:
+          type: integer
+        progresoPorProyecto:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgresoProyecto"
+        bugsPorPrioridad:
+          type: array
+          items:
+            $ref: "#/components/schemas/BugsPorPrioridad"
+        actividadSemanal:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActividadDia"
+
+    ProgresoProyecto:
+      type: object
+      required: [nombre, progreso]
+      properties:
+        nombre:
+          type: string
+        progreso:
+          type: integer
+
+    BugsPorPrioridad:
+      type: object
+      required: [prioridad, cantidad]
+      properties:
+        prioridad:
+          type: string
+        cantidad:
+          type: integer
+
+    ActividadDia:
+      type: object
+      required: [dia, tareas, bugs]
+      properties:
+        dia:
+          type: string
+        tareas:
+          type: integer
+        bugs:
+          type: integer
+
+    ActividadItem:
+      type: object
+      required: [id, mensaje, tipo, fecha, usuario]
+      properties:
+        id:
+          type: integer
+        mensaje:
+          type: string
+        tipo:
+          type: string
+        fecha:
+          type: string
+        usuario:
+          type: string
+        avatar:
+          type: ["string", "null"]
+
+    Proyecto:
+      type: object
+      required: [id, nombre, estado, progreso, descripcion, fechaCreacion, fechaActualizacion]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        estado:
+          type: string
+        progreso:
+          type: integer
+        descripcion:
+          type: string
+        fechaCreacion:
+          type: string
+        fechaActualizacion:
+          type: string
+        miembros:
+          type: array
+          items:
+            type: string
+        tecnologias:
+          type: array
+          items:
+            type: string
+
+    ProyectoInput:
+      type: object
+      required: [nombre, descripcion]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        estado:
+          type: string
+        tecnologias:
+          type: array
+          items:
+            type: string
+
+    ProyectoUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        estado:
+          type: string
+        progreso:
+          type: integer
+        tecnologias:
+          type: array
+          items:
+            type: string
+
+    Tarea:
+      type: object
+      required: [id, titulo, columna, prioridad, fechaCreacion]
+      properties:
+        id:
+          type: integer
+        titulo:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+        columna:
+          type: string
+        prioridad:
+          type: string
+        proyectoId:
+          type: ["integer", "null"]
+        asignadoA:
+          type: ["string", "null"]
+        creadoPor:
+          type: ["string", "null"]
+        etiquetas:
+          type: array
+          items:
+            type: string
+        fechaCreacion:
+          type: string
+        fechaLimite:
+          type: ["string", "null"]
+
+    TareaInput:
+      type: object
+      required: [titulo, columna]
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        columna:
+          type: string
+        prioridad:
+          type: string
+        proyectoId:
+          type: integer
+        asignadoA:
+          type: string
+        creadoPor:
+          type: string
+        etiquetas:
+          type: array
+          items:
+            type: string
+        fechaLimite:
+          type: string
+
+    TareaUpdate:
+      type: object
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        columna:
+          type: string
+        prioridad:
+          type: string
+        asignadoA:
+          type: string
+        etiquetas:
+          type: array
+          items:
+            type: string
+        fechaLimite:
+          type: string
+
+    Bug:
+      type: object
+      required: [id, titulo, prioridad, estado, fechaReporte]
+      properties:
+        id:
+          type: integer
+        titulo:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+        prioridad:
+          type: string
+        estado:
+          type: string
+        proyectoId:
+          type: ["integer", "null"]
+        asignadoA:
+          type: ["string", "null"]
+        reportadoPor:
+          type: string
+        fechaReporte:
+          type: string
+        fechaResolucion:
+          type: ["string", "null"]
+
+    BugInput:
+      type: object
+      required: [titulo, prioridad]
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        prioridad:
+          type: string
+        proyectoId:
+          type: integer
+        asignadoA:
+          type: string
+
+    BugUpdate:
+      type: object
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        prioridad:
+          type: string
+        estado:
+          type: string
+        asignadoA:
+          type: string
+        fechaResolucion:
+          type: string
+
+    Miembro:
+      type: object
+      required: [id, nombre, rol, email, enLinea, fechaUnion]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        rol:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        enLinea:
+          type: boolean
+        habilidades:
+          type: array
+          items:
+            type: string
+        fechaUnion:
+          type: string
+        proyectosActivos:
+          type: integer
+
+    MiembroInput:
+      type: object
+      required: [nombre, rol, email]
+      properties:
+        nombre:
+          type: string
+        rol:
+          type: string
+        email:
+          type: string
+        habilidades:
+          type: array
+          items:
+            type: string
+
+    MiembroUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        rol:
+          type: string
+        email:
+          type: string
+        enLinea:
+          type: boolean
+        habilidades:
+          type: array
+          items:
+            type: string
+
+    Build:
+      type: object
+      required: [id, version, estado, fechaSubida, tamano]
+      properties:
+        id:
+          type: integer
+        version:
+          type: string
+        estado:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+        changelog:
+          type: ["string", "null"]
+        proyectoId:
+          type: ["integer", "null"]
+        subidoPor:
+          type: string
+        fechaSubida:
+          type: string
+        tamano:
+          type: string
+        plataforma:
+          type: string
+        descargas:
+          type: integer
+
+    BuildInput:
+      type: object
+      required: [version, plataforma]
+      properties:
+        version:
+          type: string
+        descripcion:
+          type: string
+        changelog:
+          type: string
+        proyectoId:
+          type: integer
+        plataforma:
+          type: string
+        tamano:
+          type: string
+
+    BuildUpdate:
+      type: object
+      properties:
+        estado:
+          type: string
+        changelog:
+          type: string
+        descripcion:
+          type: string
+
+    Notificacion:
+      type: object
+      required: [id, mensaje, tipo, leida, fecha]
+      properties:
+        id:
+          type: integer
+        mensaje:
+          type: string
+        tipo:
+          type: string
+        leida:
+          type: boolean
+        fecha:
+          type: string
+        enlace:
+          type: ["string", "null"]
+        usuario:
+          type: ["string", "null"]

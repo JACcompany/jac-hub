@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "JAC Hub"
+version = "1.0.0"
+id = "artifacts/jac-hub"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19610
+
+[services.development]
+run = "pnpm --filter @workspace/jac-hub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/jac-hub", "run", "build" ]
+publicDir = "artifacts/jac-hub/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19610"
+BASE_PATH = "/"
