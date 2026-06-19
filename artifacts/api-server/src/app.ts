@@ -43,4 +43,17 @@ app.use("/api", (_req, res, next) => {
 
 app.use("/api", router);
 
+// In production: serve the built Vite frontend
+if (process.env.NODE_ENV === "production") {
+  const frontendDist = path.resolve(process.cwd(), "artifacts/jac-hub/dist/public");
+  if (existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    // SPA fallback — all non-API routes serve index.html
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(frontendDist, "index.html"));
+    });
+    logger.info({ frontendDist }, "Serving frontend static files");
+  }
+}
+
 export default app;
